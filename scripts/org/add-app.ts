@@ -565,7 +565,7 @@ async function main(): Promise<void> {
   3. npm run org:move                            # Move accounts to target OUs (~3 min)
   4. npm run org:bootstrap                       # CDK bootstrap with trust
   5. npm run org:finalize                        # Regenerate config/defaults.ts
-  6. source ./pre-bootstrap-scripts/assume_shared_services_role.sh
+  6. source ./scripts/act-as-account.sh <shared-services-account-id>
   7. npm run synth && npm run deploy             # Deploy the new pipeline
   8. git push origin main                        # Triggers the pipeline via CodeConnections
 `);

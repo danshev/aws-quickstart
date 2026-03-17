@@ -430,25 +430,6 @@ test("infra pipeline role allows scoped AppConfig deployment actions", () => {
   }
 });
 
-test("infra pipeline role allows wildcard CodeCommit repository read", () => {
-  const app = new cdk.App();
-  const stack = new InfraPipelineStack(app, "InfraCodeCommitPolicy", {
-    config: testConfig,
-    env: {
-      account: testConfig.sharedServicesAccountId,
-      region: "us-east-1",
-    },
-  });
-
-  const statements = getIamPolicyStatements(stack);
-  const statement = statements.find((candidate) =>
-    statementHasActions(candidate, ["codecommit:GetRepository"]),
-  );
-  assert.ok(statement, "Expected CodeCommit statement to exist");
-  assert.equal(statement.Effect, "Allow");
-  assert.equal(statement.Resource, "*");
-});
-
 test("infra pipeline rejects connection ARN account mismatch with stack env", () => {
   const app = new cdk.App();
   const mismatchConfig: BootstrapConfig = {

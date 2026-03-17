@@ -383,26 +383,6 @@ test("app pipeline role allows scoped AppConfig deployment actions", () => {
   }
 });
 
-test("app pipeline role allows wildcard CodeCommit repository read", () => {
-  const app = new cdk.App();
-  const stack = new AppPipelineStack(app, "AppCodeCommitPolicy", {
-    appConfig: testAppConfig,
-    sharedServicesAccountId: "111111111111",
-    env: {
-      account: "111111111111",
-      region: "us-east-1",
-    },
-  });
-
-  const statements = getIamPolicyStatements(stack);
-  const statement = statements.find((candidate) =>
-    statementHasActions(candidate, ["codecommit:GetRepository"]),
-  );
-  assert.ok(statement, "Expected CodeCommit statement to exist");
-  assert.equal(statement.Effect, "Allow");
-  assert.equal(statement.Resource, "*");
-});
-
 test("app pipeline rejects connection ARN account mismatch with stack env", () => {
   const app = new cdk.App();
   const mismatchConfig: AppConfig = {

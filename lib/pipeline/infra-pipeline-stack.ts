@@ -164,14 +164,6 @@ export class InfraPipelineStack extends cdk.Stack {
         resources: appConfigResources,
       }),
     );
-    pipeline.pipeline.role.addToPrincipalPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["codecommit:GetRepository"],
-        resources: ["*"],
-      }),
-    );
-
     const cfnPipeline = pipeline.pipeline.node.defaultChild as cdk.CfnResource;
     cfnPipeline.addPropertyOverride(
       "Stages.0.Actions.0.Configuration.OutputArtifactFormat",
