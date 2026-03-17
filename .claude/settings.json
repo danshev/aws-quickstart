@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/dan/Documents/casco-tech/aws-quickstart -name *template* -o -name *scaffold* -o -name *generator*)",
+      "Bash(ls -la /Users/dan/Documents/casco-tech/aws-quickstart/scripts/org/*.ts)",
+      "Read(//Users/dan/Documents/casco-tech/aws-quickstart/**)",
+      "WebSearch"
+    ]
+  }
+}

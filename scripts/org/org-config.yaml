@@ -1,0 +1,130 @@
+# org-config.yaml — Single source of truth for the AWS Organization layout,
+# IAM Identity Center setup, and CDK pipeline configuration.
+#
+# All pre-bootstrap scripts read from this file. Edit it once; every script
+# picks up the changes.
+
+# Default AWS region used for bootstrapping and the pipeline stack.
+# Individual accounts can override this in the organization tree below.
+region: us-east-1
+
+# IAM Identity Center (SSO) operator identity.
+# Used by `enable-iam-user.ts` to create the initial admin user/group.
+identity:
+  userName: jdoe
+  givenName: Jane
+  familyName: Doe
+  groupName: CloudAdmins
+  groupDescription: Administrators for the entire organization
+  permissionSetName: AdministratorAccess
+  sessionDuration: PT8H
+
+# Cross-account role that the management account uses to operate inside
+# member accounts. AWS creates this automatically for accounts created
+# via Organizations.
+crossAccountRoleName: OrganizationAccountAccessRole
+
+# Management profile — set by org:setup-principal. Used by org:bootstrap
+# and org:security to run as a non-root principal.
+managementProfile: org-setup
+managementSetupRoleName: OrgSetupRole
+
+# Organization tree.
+#
+# Structure rules:
+#   - Every key is an OU name unless it contains `account: true`.
+#   - Nesting represents parent → child relationships.
+#   - Accounts are always leaves.
+#   - `role: sharedServices` marks the pipeline-owning account.
+#   - `stage` maps an account to a CDK deployment target.
+#   - `app` assigns the account to a named app (required when `stage` is set).
+#
+# To add a new environment (e.g. staging), add an OU + account entry
+# and rerun the scripts. No code changes required.
+organization:
+  Infrastructure:
+    Shared Services:
+      account: true
+      role: sharedServices
+
+  # AWS Organizations applies a practical first-24-hour creation limit for new
+  # orgs: only 4 member accounts can be created (in addition to Management).
+  # This template reserves that initial window for:
+  #   1) Shared Services, 2) Log Archive, 3) Audit
+  # Add workload accounts after the first 24 hours by uncommenting/editing
+  # the stage account examples below.
+  Workloads:
+    # Dev:
+    #   App 1 (dev):
+    #     account: true
+    #     app: myapp
+    #     stage: dev
+    #     requiresManualApproval: false
+    #
+    # Prod:
+    #   App 1 (prod):
+    #     account: true
+    #     app: myapp
+    #     stage: prod
+    #     requiresManualApproval: true
+
+  Security:
+    Log Archive:
+      account: true
+      role: logArchive
+    Audit:
+      account: true
+      role: audit
+
+# Infrastructure pipeline settings (security + shared services).
+infraPipeline:
+  name: InfraDeployPipeline
+  connectionArn: "arn:aws:codeconnections:us-east-1:123456789012:connection/your-connection-id" # Fill after creating connection in AWS Console
+  owner: my-github-user
+  repositoryName: my-repo
+  repositoryBranch: main
+  crossAccountKeys: true
+  triggerOnPaths:
+    filePathsExcludes:
+      - "packages/**"
+
+# Per-app pipeline settings. Each app gets its own self-mutating CodePipeline.
+# After adding workload accounts, uncomment and configure your first app
+# (or use `npm run org:add-app` to generate this automatically):
+apps: []
+  # - name: myapp
+  #   pipeline:
+  #     name: MyappPipeline
+  #     connectionArn: "arn:aws:codeconnections:us-east-1:123456789012:connection/your-connection-id"
+  #     owner: my-github-user
+  #     repositoryName: my-repo
+  #     repositoryBranch: main
+  #     crossAccountKeys: true
+  #     triggerOnPaths:
+  #       filePathsIncludes:
+  #         - "lib/myapp/**"
+  #         - "packages/myapp/**"
+  #         - "lib/constructs/**"
+  #         - "lib/infra/spoke-network-stack.ts"
+  #         - "lib/pipeline/app-pipeline-stack.ts"
+  #         - "lib/app-stage-props.ts"
+  #         - "bin/app.ts"
+  #         - "config/**"
+
+# Security baseline (optional).
+# Uncomment to deploy CloudTrail, SCPs, budget alerts, and Access Analyzer.
+# Cost: ~$1-5/month (CloudTrail S3 storage only).
+# security:
+#   alertEmail: security@example.com
+#   monthlyBudgetUsd: 1000
+#   allowedRegions:
+#     - us-east-1
+
+# Transit Gateway centralized egress (optional).
+# Uncomment to deploy a TGW + Egress VPC in Shared Services and spoke
+# VPCs with demo EC2 instances in each workload account.
+# All internet traffic routes through a single NAT Gateway.
+# Cost: ~$234/month (NAT GW + TGW attachments). Remove to tear down.
+# network:
+#   egressVpcCidr: "10.0.0.0/16"
+#   tgwAsn: 64512
