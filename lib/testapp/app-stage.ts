@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import type { Construct } from "constructs";
 import type { AppStageProps } from "../app-stage-props";
 import { AppResourcesStack } from "./stacks/app-resources-stack";
+import { ServiceBudgetsStack } from "./stacks/service-budgets-stack";
 import { SpokeNetworkStack } from "../infra/spoke-network-stack";
 
 function toPascalCase(value: string): string {
@@ -34,6 +35,19 @@ export class AppStage extends cdk.Stage {
           stageName: props.stageName,
           spokeCidr: props.deploymentTarget.spokeCidr,
           sharedServicesAccountId: props.sharedServicesAccountId ?? "",
+          env: props.env,
+        },
+      );
+    }
+
+    if (props.appConfig.alertEmail && props.deploymentTarget.serviceBudgets?.length) {
+      new ServiceBudgetsStack(
+        this,
+        `${toPascalCase(props.stageName)}ServiceBudgets`,
+        {
+          alertEmail: props.appConfig.alertEmail,
+          serviceBudgets: props.deploymentTarget.serviceBudgets,
+          stageName: props.stageName,
           env: props.env,
         },
       );

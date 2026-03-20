@@ -1,5 +1,16 @@
 export type StageName = "dev" | "prod" | string;
 
+/** A monthly cost budget alert for a single AWS service. */
+export interface ServiceBudgetAlert {
+  /**
+   * AWS service display name as it appears in Cost Explorer.
+   * Examples: "Amazon Bedrock", "Amazon DynamoDB", "AWS Lambda"
+   */
+  service: string;
+  /** Monthly cost threshold in USD that triggers the alert. */
+  monthlyThresholdUsd: number;
+}
+
 export interface DeploymentTarget {
   name: StageName;
   accountId: string;
@@ -7,6 +18,11 @@ export interface DeploymentTarget {
   requiresManualApproval?: boolean;
   /** Spoke VPC CIDR for this target (required when network is enabled). */
   spokeCidr?: string;
+  /**
+   * Per-service monthly cost budget alerts for this stage.
+   * Requires AppConfig.alertEmail to be set. Each entry creates one AWS Budget.
+   */
+  serviceBudgets?: ServiceBudgetAlert[];
 }
 
 export interface TriggerPathFilter {
@@ -80,6 +96,8 @@ export interface AppConfig {
   domain?: DomainConfig;
   apolloGraphQL?: ApolloGraphQLConfig;
   stripe?: StripeConfig;
+  /** Email address for app-level cost alerts (e.g. service budget notifications). */
+  alertEmail?: string;
 }
 
 export interface BootstrapConfig {
