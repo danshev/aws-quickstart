@@ -1,12 +1,14 @@
 export type StageName = "dev" | "prod" | string;
 
-/** A monthly cost budget alert for a single AWS service. */
+/** A monthly cost budget alert covering one or more AWS services under a shared threshold. */
 export interface ServiceBudgetAlert {
   /**
-   * AWS service display name as it appears in Cost Explorer.
+   * One or more AWS service display names as they appear in Cost Explorer.
+   * Use multiple entries to group related services under a single budget
+   * (e.g. "Amazon Bedrock" and "Claude Sonnet 4.6 ( Bedrock Edition)").
    * Examples: "Amazon Bedrock", "Amazon DynamoDB", "AWS Lambda"
    */
-  service: string;
+  services: string[];
   /** Monthly cost threshold in USD that triggers the alert. */
   monthlyThresholdUsd: number;
 }

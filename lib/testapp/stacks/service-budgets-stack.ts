@@ -30,9 +30,11 @@ export class ServiceBudgetsStack extends cdk.Stack {
     const { alertEmail, stageName, serviceBudgets } = props;
 
     for (const alert of serviceBudgets) {
-      new budgets.CfnBudget(this, `${toPascalCase(alert.service)}Budget`, {
+      const id = alert.services.map(toPascalCase).join("");
+      const name = alert.services.map(toKebabCase).join("-");
+      new budgets.CfnBudget(this, `${id}Budget`, {
         budget: {
-          budgetName: `${stageName}-${toKebabCase(alert.service)}-budget`,
+          budgetName: `${stageName}-${name}-budget`,
           budgetType: "COST",
           timeUnit: "MONTHLY",
           budgetLimit: {
@@ -40,7 +42,7 @@ export class ServiceBudgetsStack extends cdk.Stack {
             unit: "USD",
           },
           costFilters: {
-            Service: [alert.service],
+            Service: alert.services,
           },
         },
         notificationsWithSubscribers: [
