@@ -3,10 +3,17 @@ export type StageName = "dev" | "prod" | string;
 /** A monthly cost budget alert covering one or more AWS services under a shared threshold. */
 export interface ServiceBudgetAlert {
   /**
+   * Short label used to name the budget: `{stageName}-{name}-budget`.
+   * Example: "bedrock" → "dev-bedrock-budget"
+   */
+  name: string;
+  /**
    * One or more AWS service display names as they appear in Cost Explorer.
-   * Use multiple entries to group related services under a single budget
-   * (e.g. "Amazon Bedrock" and "Claude Sonnet 4.6 ( Bedrock Edition)").
-   * Examples: "Amazon Bedrock", "Amazon DynamoDB", "AWS Lambda"
+   * Use multiple entries to group related services under a single budget.
+   * IMPORTANT: values must match exactly what the Cost Explorer API returns —
+   * the chart tooltip label may differ. Use `aws ce get-dimension-values --dimension SERVICE`
+   * to get the canonical strings (e.g. "Claude Sonnet 4.6 (Amazon Bedrock Edition)",
+   * not "Claude Sonnet 4.6 ( Bedrock Edition)" as shown in the tooltip).
    */
   services: string[];
   /** Monthly cost threshold in USD that triggers the alert. */

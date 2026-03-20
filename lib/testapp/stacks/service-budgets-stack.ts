@@ -30,11 +30,9 @@ export class ServiceBudgetsStack extends cdk.Stack {
     const { alertEmail, stageName, serviceBudgets } = props;
 
     for (const alert of serviceBudgets) {
-      const id = alert.services.map(toPascalCase).join("");
-      const name = alert.services.map(toKebabCase).join("-");
-      new budgets.CfnBudget(this, `${id}Budget`, {
+      new budgets.CfnBudget(this, `${toPascalCase(alert.name)}Budget`, {
         budget: {
-          budgetName: `${stageName}-${name}-budget`,
+          budgetName: `${stageName}-${toKebabCase(alert.name)}-budget`,
           budgetType: "COST",
           timeUnit: "MONTHLY",
           budgetLimit: {
