@@ -111,7 +111,7 @@ npm run org:security
 Current behavior:
 
 - `org:scps` deploys preventive SCPs from the management account
-- `org:security` enables default EBS encryption, S3 Block Public Access, and organization-wide IAM Access Analyzer
+- `org:security` enables default EBS encryption, S3 Block Public Access, organization-wide IAM Access Analyzer, and registers the Audit account as the CloudTrail delegated administrator
 
 ### 6. Bootstrap CDK in All Accounts
 
@@ -272,6 +272,12 @@ Relevant files:
 
 Security account IDs are generated into [`config/defaults.ts`](/Users/dan/Documents/casco-tech/aws-quickstart/config/defaults.ts) by `org:finalize` when Log Archive and Audit accounts exist.
 
+The account layout follows the [AWS Security Reference Architecture (SRA)](https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html):
+
+- **Log Archive account** — immutable log storage (CloudTrail, Config)
+- **Audit account** — delegated administrator for security services (CloudTrail, and eventually GuardDuty, SecurityHub, Config); also hosts budget/cost anomaly alerts
+- **Shared Services account** — CI/CD pipelines and shared operational infrastructure only
+
 Optional security overrides such as alert email or allowed regions belong in `config/local.ts`, for example:
 
 ```typescript
@@ -288,9 +294,10 @@ export const localConfig: Partial<BootstrapConfig> = {
 
 Current implementation includes:
 
-- org-wide CloudTrail and log archive resources in the infra pipeline when `config.security` is present
-- budget alerts in the Log Archive account
-- org scripts for SCP deployment and account-level security defaults
+- log archive S3 buckets deployed to the Log Archive account
+- org-wide CloudTrail trail deployed to the Audit account (currently disabled pending management account CDK bootstrap)
+- budget alerts and cost anomaly detection deployed to the Audit account
+- org scripts for SCP deployment, account-level security defaults, and Audit account delegated admin registration
 
 Relevant files:
 
@@ -335,7 +342,7 @@ Commands from [`package.json`](/Users/dan/Documents/casco-tech/aws-quickstart/pa
 | `npm run org:bootstrap` | Bootstrap Shared Services and member accounts for CDK |
 | `npm run org:iam` | Create the IAM Identity Center user/group/assignment |
 | `npm run org:scps` | Deploy preventive SCPs |
-| `npm run org:security` | Enable EBS encryption, S3 BPA, and IAM Access Analyzer |
+| `npm run org:security` | Enable EBS encryption, S3 BPA, IAM Access Analyzer, and register Audit as CloudTrail delegated admin |
 | `npm run org:finalize` | Generate `config/defaults.ts` from live AWS data |
 
 ## Project Layout

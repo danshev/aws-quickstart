@@ -212,16 +212,14 @@ async function main(): Promise<void> {
   await ensureAccessAnalyzerServiceAccessEnabled(managementAwsOpts);
   enableAccessAnalyzer(config.region, managementAwsOpts);
 
-  // Register Shared Services as CloudTrail delegated administrator.
-  const sharedServicesAccount = config.accounts.find(
-    (a) => a.role === "sharedServices",
-  );
-  if (sharedServicesAccount) {
+  // Register Audit account as CloudTrail delegated administrator.
+  const auditAccount = config.accounts.find((a) => a.role === "audit");
+  if (auditAccount) {
     logStep(
-      "Registering Shared Services as CloudTrail delegated administrator…",
+      "Registering Audit account as CloudTrail delegated administrator…",
     );
-    const sharedServicesAccountId = resolveAccountId(
-      sharedServicesAccount.name,
+    const auditAccountId = resolveAccountId(
+      auditAccount.name,
       managementAwsOpts,
     );
 
@@ -255,21 +253,36 @@ async function main(): Promise<void> {
       "organizations list-delegated-administrators --service-principal cloudtrail.amazonaws.com",
       managementAwsOpts,
     );
+
     const alreadyRegistered = delegatedAdmins.DelegatedAdministrators?.some(
-      (entry) => entry.Id === sharedServicesAccountId,
+      (entry) => entry.Id === auditAccountId,
     );
+
+    // Deregister any previously registered delegated admin that is not the Audit account.
+    for (const admin of delegatedAdmins.DelegatedAdministrators ?? []) {
+      if (admin.Id !== auditAccountId) {
+        logStep(
+          `Deregistering previous delegated admin (${admin.Id}) for CloudTrail…`,
+        );
+        aws(
+          `cloudtrail deregister-organization-delegated-admin --delegated-admin-account-id ${admin.Id}`,
+          managementAwsOpts,
+        );
+        logSuccess(`Deregistered ${admin.Id} as CloudTrail delegated admin.`);
+      }
+    }
 
     if (alreadyRegistered) {
       logStep(
-        `Shared Services (${sharedServicesAccountId}) is already a CloudTrail delegated administrator.`,
+        `Audit (${auditAccountId}) is already a CloudTrail delegated administrator.`,
       );
     } else {
       aws(
-        `cloudtrail register-organization-delegated-admin --member-account-id ${sharedServicesAccountId}`,
+        `cloudtrail register-organization-delegated-admin --member-account-id ${auditAccountId}`,
         managementAwsOpts,
       );
       logSuccess(
-        `Registered Shared Services (${sharedServicesAccountId}) as CloudTrail delegated administrator.`,
+        `Registered Audit (${auditAccountId}) as CloudTrail delegated administrator.`,
       );
     }
   }

@@ -77,7 +77,6 @@ export class InfraPipelineStack extends cdk.Stack {
       pipeline.addStage(
         new SecurityStage(this, "Security", {
           securityConfig: config.security,
-          sharedServicesAccountId: config.sharedServicesAccountId,
           organizationId: this.node.tryGetContext("organizationId") ?? "",
           env: {
             account: config.security.logArchiveAccountId,

@@ -7,7 +7,6 @@ import { LogArchiveStack } from "./log-archive-stack";
 
 export interface SecurityStageProps extends cdk.StageProps {
   readonly securityConfig: SecurityConfig;
-  readonly sharedServicesAccountId: string;
   readonly organizationId: string;
 }
 
@@ -15,7 +14,7 @@ export class SecurityStage extends cdk.Stage {
   constructor(scope: Construct, id: string, props: SecurityStageProps) {
     super(scope, id, props);
 
-    const { securityConfig, sharedServicesAccountId, organizationId } = props;
+    const { securityConfig, organizationId } = props;
     const region = props.env?.region ?? "us-east-1";
 
     // ── Log Archive Stack (deployed to Log Archive account) ─────────
@@ -28,7 +27,7 @@ export class SecurityStage extends cdk.Stage {
       },
     });
 
-    // ── Org CloudTrail Stack (deployed to Shared Services account) ──
+    // ── Org CloudTrail Stack (deployed to Audit account) ────────────
     // DISABLED: Deploying the org trail requires CDK-bootstrapping the
     // management account, which is currently blocked. Re-enable once
     // that dependency is resolved.
@@ -36,20 +35,20 @@ export class SecurityStage extends cdk.Stage {
     // const cloudTrailStack = new OrgCloudTrailStack(this, "OrgCloudTrail", {
     //   cloudTrailBucketArn: `arn:aws:s3:::${securityConfig.logArchiveAccountId}-org-cloudtrail-logs`,
     //   env: {
-    //     account: sharedServicesAccountId,
+    //     account: securityConfig.auditAccountId,
     //     region,
     //   },
     // });
     // cloudTrailStack.addDependency(logArchiveStack);
 
-    // ── Budget Alerts Stack (deployed to Shared Services account) ───
+    // ── Budget Alerts Stack (deployed to Audit account) ─────────────
 
     if (securityConfig.alertEmail) {
       new BudgetAlertsStack(this, "BudgetAlerts", {
         alertEmail: securityConfig.alertEmail,
         monthlyBudgetUsd: securityConfig.monthlyBudgetUsd ?? 1000,
         env: {
-          account: sharedServicesAccountId,
+          account: securityConfig.auditAccountId,
           region,
         },
       });
